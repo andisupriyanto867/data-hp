@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Log Perangkat Kerja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#111417; --bg-grad:#14181C;
+    --panel:#1B1F24; --panel-alt:#20252B; --panel-hi:#252B32;
+    --border:#2A3038; --border-soft:#20252A;
+    --text:#F1F3F5; --muted:#8D959E; --dim:#5A6169;
+    --green:#3DDC97; --green-dim:rgba(61,220,151,.12);
+    --amber:#F5A623; --amber-dim:rgba(245,166,35,.12);
+    --teal:#2DD4BF; --red:#F0555A; --red-dim:rgba(240,85,90,.12);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:radial-gradient(1200px 500px at 50% -10%, var(--bg-grad), var(--bg) 60%);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;transition:background .25s,color .25s;}
+  .font-display{font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em;font-weight:700;text-transform:uppercase;}
+  .font-mono{font-family:'JetBrains Mono',monospace;}
+  input::placeholder{color:var(--dim);}
+  .wrap{max-width:680px;margin:0 auto;}
+  header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--border-soft);transition:background .25s,border-color .25s;}
+
+  .logo-banner{display:flex;padding:12px 20px 0;}
+  .logo-frame{width:38mm;height:13mm;min-width:110px;min-height:38px;max-width:52vw;border-radius:8px;overflow:hidden;background:#fff;border:1px solid var(--border);flex-shrink:0;}
+  .logo-frame img{width:100%;height:100%;object-fit:contain;display:block;}
+
+  .mode-toggle{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:var(--panel);border:1px solid var(--border);cursor:pointer;flex-shrink:0;transition:background .15s,border-color .15s;}
+  .mode-toggle:hover{border-color:#40484F;}
+  .head-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+
+  .head-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 14px;gap:10px;}
+  .logo-row{display:flex;align-items:center;gap:11px;min-width:0;}
+  .logo-box{width:38px;height:38px;border-radius:10px;background:linear-gradient(155deg,var(--green),#2bb87d);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px -4px rgba(61,220,151,.5);}
+  h1{font-size:20px;line-height:1.05;margin:0;letter-spacing:.02em;}
+  .subtitle{font-size:12px;color:var(--muted);margin:3px 0 0;}
+  .status-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--border);padding:5px 10px;border-radius:999px;flex-shrink:0;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0;}
+  .dot.online{background:var(--green);box-shadow:0 0 0 3px var(--green-dim);}
+  .dot.saving{background:var(--amber);animation:pulse 1s infinite;}
+  .dot.error{background:var(--red);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .tabs{display:flex;gap:2px;padding:0 20px;overflow-x:auto;}
+  .tab{display:flex;align-items:center;gap:6px;padding:11px 14px;font-size:13.5px;font-weight:600;white-space:nowrap;
+       background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;margin-bottom:-1px;transition:color .15s;}
+  .tab:hover{color:var(--text);}
+  .tab.active{color:var(--text);border-color:var(--green);}
+  .tab .badge{background:var(--panel-alt);color:var(--muted);font-size:10.5px;font-family:'JetBrains Mono',monospace;padding:1px 6px;border-radius:999px;}
+  .tab.active .badge{background:var(--green-dim);color:var(--green);}
+  main{padding:22px 20px 70px;}
+  section{margin-bottom:22px;}
+  .section-title{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12.5px;color:var(--muted);margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+  .section-title .left{display:flex;align-items:center;gap:6px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow);}
+  .card + .card{margin-top:12px;}
+  .card-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  form{display:flex;flex-direction:column;gap:13px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px;font-weight:500;}
+  input[type=text], input[type=number]{
+    width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+    padding:10px 12px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s, box-shadow .15s, background .25s;
+  }
+  input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim);}
+  input:disabled{opacity:.5;}
+  .search-wrap{position:relative;}
+  .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;}
+  .search-wrap input{padding-left:34px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--border);
+        background:var(--bg);color:var(--muted);cursor:pointer;transition:.15s;}
+  .chip:hover{border-color:#40484F;}
+  .chip.active{background:var(--green);border-color:var(--green);color:#0E1112;font-weight:700;}
+  .filter-chip.active{background:var(--panel-hi);border-color:#40484F;color:var(--text);}
+  .btn{border:none;border-radius:8px;padding:11px 14px;font-size:14px;font-weight:700;cursor:pointer;
+       display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .1s, filter .15s;}
+  .btn:active{transform:scale(.98);}
+  .btn:hover{filter:brightness(1.08);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary{background:linear-gradient(155deg,var(--green),#2bb87d);color:#0E1112;width:100%;box-shadow:0 6px 16px -6px rgba(61,220,151,.45);}
+  .btn-teal{background:var(--teal);color:#0E1112;}
+  .icon-btn{background:none;border:none;cursor:pointer;padding:6px;border-radius:7px;display:flex;transition:background .15s;}
+  .icon-btn:hover{background:var(--panel-alt);}
+  .empty{font-size:13px;color:var(--dim);border:1px dashed var(--border);border-radius:12px;padding:22px 16px;text-align:center;}
+  .device-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .device-id{display:flex;align-items:center;gap:10px;min-width:0;}
+  .avatar{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:#0E1112;}
+  .device-name{font-weight:700;font-size:14.5px;margin:0;line-height:1.2;}
+  .device-meta{font-size:11.5px;color:var(--muted);margin:2px 0 0;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+  .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--amber);background:var(--amber-dim);padding:3px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;}
+  .live-dot{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:pulse 1.2s infinite;}
+  .dashed-top{border-top:1px dashed var(--border);margin-top:14px;padding-top:14px;}
+  .gauge-row{display:flex;align-items:center;gap:8px;}
+  .gauge{display:flex;align-items:center;}
+  .gauge-body{border:2px solid #3A4046;border-radius:3px;position:relative;overflow:hidden;display:flex;}
+  .gauge-fill{position:absolute;top:3px;bottom:3px;left:3px;border-radius:1px;transition:width .4s;}
+  .gauge-tip{width:4px;background:#3A4046;border-radius:0 2px 2px 0;}
+  .gauge-pct{font-size:13px;font-weight:600;}
+  .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .summary-box{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 13px;box-shadow:var(--shadow);}
+  .summary-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+  .summary-label{font-size:10.5px;color:var(--muted);margin:0;text-transform:uppercase;letter-spacing:.03em;}
+  .summary-value{font-size:20px;margin:3px 0 0;font-weight:600;}
+
+  .report-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:0;box-shadow:var(--shadow);overflow:hidden;}
+  .report-card + .report-card{margin-top:14px;}
+  .rc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 12px;}
+  .rc-status{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
+  .rc-status.good{background:var(--green-dim);color:var(--green);}
+  .rc-status.bad{background:var(--red-dim);color:var(--red);}
+  .rc-battery{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:6px 16px 14px;}
+  .rc-batt-col{background:var(--bg);border-radius:10px;padding:10px 12px;text-align:center;}
+  .rc-batt-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 6px;font-weight:600;}
+  .rc-batt-value{font-size:24px;font-weight:700;margin:0;line-height:1;}
+  .rc-batt-cond{font-size:10.5px;color:var(--muted);margin:5px 0 0;}
+  .rc-arrow{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .rc-delta{font-size:12.5px;font-weight:700;font-family:'JetBrains Mono',monospace;padding:3px 7px;border-radius:6px;white-space:nowrap;}
+  .rc-stats{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;background:var(--panel-alt);border-top:1px solid var(--border);flex-wrap:wrap;}
+  .rc-stat{display:flex;align-items:center;gap:6px;font-size:12.5px;}
+  .rc-stat .stat-label{color:var(--dim);font-size:10.5px;}
+  .rc-time{font-size:11px;color:var(--muted);padding:0 16px 12px;display:flex;align-items:center;gap:5px;}
+  .rc-warn{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--red);background:var(--red-dim);margin:0 16px 14px;padding:9px 11px;border-radius:8px;line-height:1.4;}
+  .rc-note{font-size:11.5px;color:var(--muted);padding:0 16px 14px;font-style:italic;}
+
+  .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .result-count{font-size:11.5px;color:var(--dim);margin:0 0 12px;}
+  .save-err{font-size:12px;color:var(--red);text-align:center;margin-top:16px;background:var(--red-dim);padding:10px;border-radius:8px;}
+  .config-warn{font-size:12.5px;color:var(--amber);background:var(--amber-dim);padding:12px 14px;border-radius:10px;margin-bottom:18px;line-height:1.5;}
+  .config-warn code{font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.2);padding:1px 5px;border-radius:4px;}
+  svg{display:block;flex-shrink:0;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#2A3038;border-radius:4px;}
+
+  @media(max-width:460px){
+    .grid-2{grid-template-columns:1fr;}
+    .summary-grid{grid-template-columns:1fr 1fr;}
+    .rc-battery{grid-template-columns:1fr auto 1fr;}
+    .rc-batt-value{font-size:20px;}
+    .logo-frame{width:34mm;height:12mm;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo-banner">
+      <div class="logo-frame">
+        <img src="https://res.cloudinary.com/vf5nikiz/image/upload/v1785164146/IMG_20260707_085722_slsyiz.jpg" alt="Logo Perusahaan">
+      </div>
+    </div>
+    <div class="head-top">
+      <div class="logo-row">
+        <div class="logo-box">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0E1112" stroke-width="2.5"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        </div>
+        <div style="min-width:0;">
+          <h1 class="font-display">Log Perangkat Kerja</h1>
+          <p class="subtitle">Checklist baterai &amp; kondisi sebelum / setelah shift</p>
+        </div>
+      </div>
+      <div class="head-right">
+        <div class="status-pill" id="statusDot"><span class="dot" id="dotEl"></span><span id="dotLabel">Menghubungkan</span></div>
+        <button class="mode-toggle" id="modeToggle" title="Ganti mode terang/gelap"></button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="checklist" id="tabChecklist">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+        Checklist
+      </button>
+      <button class="tab" data-tab="laporan" id="tabLaporan">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+        Laporan
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <p style="font-size:13px;color:var(--muted);">Memuat data...</p>
+  </main>
+</div>
+
+<script>
+/* ============ KONFIGURASI GOOGLE SHEET ============
+   1. Buka spreadsheet ini di Apps Script (Extensions > Apps Script)
+   2. Tempel kode dari file "AppsScript-Code.gs"
+   3. Deploy sebagai Web App ("Anyone" access)
+   4. Tempel URL hasil deploy di bawah ini
+*/
+const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1kED4AVKvbJ1xcygaQ7uusidbUg3pz_cRrNd48WX0iQQ/edit?usp=drivesdk";
+const APPS_SCRIPT_URL = "PASTE_URL_WEB_APP_DEPLOYMENT_DI_SINI";
+/* ==================================================== */
+
+const KONDISI_FALLBACK = ["Baik", "Ada Lecet", "Layar Retak", "Rusak / Tidak Berfungsi"];
+let kondisiOpts = KONDISI_FALLBACK.slice();
+const AVATAR_COLORS = ["#3DDC97","#2DD4BF","#F5A623","#60A5FA","#C084FC","#F472B6"];
+
+// Mode terang: warna dipilih agar teks tetap kontras & jelas dibaca di atas latar terang.
+const LIGHT_VARS = {
+  bg:"#F5F6F8", bgGrad:"#EAECEF", panel:"#FFFFFF", panelAlt:"#F1F3F5", panelHi:"#E7EAED",
+  border:"#D7DBE0", borderSoft:"#E7EAED", text:"#171A1D", muted:"#585F66", dim:"#8B929A",
+  accent:"#0E9E63", accentDim:"rgba(14,158,99,.12)",
+  amber:"#B9740E", amberDim:"rgba(185,116,14,.12)",
+  teal:"#0E8E86", red:"#D23B3B", redDim:"rgba(210,59,59,.10)"
+};
+const DARK_VARS_KEYS = ["--bg","--bg-grad","--panel","--panel-alt","--panel-hi","--border","--border-soft","--text","--muted","--dim","--green","--green-dim","--amber","--amber-dim","--teal","--red","--red-dim"];
+
+let uiMode = "dark"; // "dark" | "light"
+
+function applyMode(mode){
+  uiMode = mode;
+  const root = document.documentElement.style;
+  if(mode === "dark"){
+    DARK_VARS_KEYS.forEach(v => root.removeProperty(v));
+  } else {
+    const v = LIGHT_VARS;
+    root.setProperty("--bg", v.bg);
+    root.setProperty("--bg-grad", v.bgGrad);
+    root.setProperty("--panel", v.panel);
+    root.setProperty("--panel-alt", v.panelAlt);
+    root.setProperty("--panel-hi", v.panelHi);
+    root.setProperty("--border", v.border);
+    root.setProperty("--border-soft", v.borderSoft);
+    root.setProperty("--text", v.text);
+    root.setProperty("--muted", v.muted);
+    root.setProperty("--dim", v.dim);
+    root.setProperty("--green", v.accent);
+    root.setProperty("--green-dim", v.accentDim);
+    root.setProperty("--amber", v.amber);
+    root.setProperty("--amber-dim", v.amberDim);
+    root.setProperty("--teal", v.teal);
+    root.setProperty("--red", v.red);
+    root.setProperty("--red-dim", v.redDim);
+  }
+  renderModeToggle();
+}
+
+function renderModeToggle(){
+  const btn = document.getElementById("modeToggle");
+  if(!btn) return;
+  btn.innerHTML = uiMode === "dark"
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#585F66" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+}
+
+let sessions = [];
+let masterOperators = [];
+let masterHp = [];
+let loaded = false;
+let tab = "checklist";
+let saveError = false;
+let configMissing = !APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("PASTE_URL") !== -1;
+let startForm = { deviceName:"", worker:"", startBattery:"", startCondition:"Baik", startNote:"" };
+let endForms = {};
+let reportQuery = "";
+let reportStatus = "all"; // all | good | bad
+
+function setStatus(state, label){
+  const dot = document.getElementById("dotEl");
+  const lab = document.getElementById("dotLabel");
+  dot.className = "dot " + state;
+  lab.textContent = label;
+}
+
+function fmtTime(iso){
+  if(!iso) return "-";
+  const d = new Date(iso);
+  return d.toLocaleString("id-ID",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+}
+function fmtDuration(ms){
+  if(ms==null || ms<0) return "-";
+  const totalMin = Math.round(ms/60000);
+  const h = Math.floor(totalMin/60), m = totalMin%60;
+  if(h===0) return m + " mnt";
+  return h + " jam " + m + " mnt";
+}
+function batteryColor(pct){
+  if(pct==null) return "#8D959E";
+  if(pct<=20) return "#F0555A";
+  if(pct<=50) return "#F5A623";
+  return "#3DDC97";
+}
+function hashColor(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++) h = str.charCodeAt(i) + ((h<<5)-h);
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+function initials(name){
+  const parts = name.trim().split(/\s+/);
+  if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0]+parts[1][0]).toUpperCase();
+}
+
+function gaugeHTML(pct, size){
+  const h = size==="sm" ? 22 : 30;
+  const w = size==="sm" ? 46 : 62;
+  const color = batteryColor(pct);
+  const fillW = Math.max(0, Math.min(100, pct==null?0:pct))/100 * (w-6);
+  return `
+    <div class="gauge-row">
+      <div class="gauge">
+        <div class="gauge-body" style="width:${w}px;height:${h}px;">
+          <div class="gauge-fill" style="width:${fillW}px;background:${color};"></div>
+        </div>
+        <div class="gauge-tip" style="height:${h*0.45}px;"></div>
+      </div>
+      <span class="font-mono gauge-pct" style="color:${color};">${pct==null?"--":pct+"%"}</span>
+    </div>`;
+}
+
+function chipsHTML(name, value){
+  return `<div class="chips">` + kondisiOpts.map(opt =>
+    `<button type="button" class="chip ${value===opt?'active':''}" data-chipgroup="${name}" data-value="${opt}">${escapeHtml(opt)}</button>`
+  ).join("") + `</div>`;
+}
+
+/* ============ DATA LAYER (Google Sheets via Apps Script) ============ */
+
+async function apiGet(action){
+  const res = await fetch(`${APPS_SCRIPT_URL}?action=${action}`);
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+async function apiPost(payload){
+  const res = await fetch(APPS_SCRIPT_URL, { method:"POST", body: JSON.stringify(payload) });
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+async function loadAll(){
+  if(configMissing){ loaded = true; render(); return; }
+  try{
+    setStatus("saving", "Menyinkron...");
+    const [listRes, masterRes, kondisiRes, hpRes] = await Promise.all([apiGet("list"), apiGet("master"), apiGet("kondisi"), apiGet("hp")]);
+    sessions = (listRes.sessions || []).sort((a,b) => new Date(b.startTime) - new Date(a.startTime));
+    masterOperators = masterRes.master || [];
+    masterHp = hpRes.hp || [];
+    kondisiOpts = (kondisiRes.kondisi && kondisiRes.kondisi.length) ? kondisiRes.kondisi : KONDISI_FALLBACK.slice();
+    loaded = true;
+    saveError = false;
+    setStatus("online", "Tersambung");
+  }catch(err){
+    saveError = true;
+    loaded = true;
+    setStatus("error", "Gagal terhubung");
+  }
+  render();
+}
+
+async function startSession(){
+  if(!startForm.deviceName.trim() || startForm.startBattery==="") return;
+  setStatus("saving", "Menyimpan...");
+  try{
+    await apiPost({
+      action:"start",
+      deviceName: startForm.deviceName.trim(),
+      worker: startForm.worker.trim(),
+      startBattery: startForm.startBattery,
+      startCondition: startForm.startCondition,
+      startNote: startForm.startNote.trim()
+    });
+    startForm = { deviceName:"", worker:"", startBattery:"", startCondition:"Baik", startNote:"" };
+    await loadAll();
+  }catch(err){
+    saveError = true;
+    setStatus("error","Gagal menyimpan");
+    render();
+  }
+}
+
+async function completeSession(id){
+  const f = endForms[id] || {};
+  if(f.endBattery===undefined || f.endBattery==="") return;
+  setStatus("saving", "Menyimpan...");
+  try{
+    await apiPost({
+      action:"complete",
+      id,
+      endBattery: f.endBattery,
+      endCondition: f.endCondition || "Baik",
+      endNote: (f.endNote||"").trim()
+    });
+    delete endForms[id];
+    await loadAll();
+  }catch(err){
+    saveError = true;
+    setStatus("error","Gagal menyimpan");
+    render();
+  }
+}
+
+async function deleteSession(id){
+  setStatus("saving", "Menghapus...");
+  try{
+    await apiPost({ action:"delete", id });
+    await loadAll();
+  }catch(err){
+    saveError = true;
+    setStatus("error","Gagal menghapus");
+    render();
+  }
+}
+
+function computeSummary(completed){
+  if(completed.length===0) return null;
+  let totalUsed=0, totalMs=0, countUsed=0, bermasalah=0;
+  const devices = new Set();
+  completed.forEach(s=>{
+    const used = s.startBattery - s.endBattery;
+    const ms = new Date(s.endTime) - new Date(s.startTime);
+    totalMs += ms;
+    devices.add(s.deviceName);
+    if(!isNaN(used)){ totalUsed += used; countUsed++; }
+    if(s.endCondition && s.endCondition !== "Baik") bermasalah++;
+  });
+  const avgUsed = countUsed ? totalUsed/countUsed : 0;
+  const avgMs = completed.length ? totalMs/completed.length : 0;
+  return { avgUsed, avgMs, count: completed.length, devices: devices.size, bermasalah };
+}
+
+function operatorOptionsHTML(){
+  return masterOperators.map(o => `<option value="${escapeHtml(o.name)}${o.role ? ' - '+escapeHtml(o.role) : ''}">`).join("");
+}
+function hpOptionsHTML(){
+  return masterHp.map(sn => `<option value="${escapeHtml(sn)}">`).join("");
+}
+
+function configWarningHTML(){
+  if(!configMissing) return "";
+  return `<div class="config-warn">
+    Aplikasi belum terhubung ke Google Sheet. Deploy skrip <code>AppsScript-Code.gs</code> sebagai Web App lalu tempel URL-nya di variabel <code>APPS_SCRIPT_URL</code> pada file HTML ini.
+  </div>`;
+}
+
+function render(){
+  const main = document.getElementById("main");
+  document.getElementById("tabChecklist").classList.toggle("active", tab==="checklist");
+  document.getElementById("tabLaporan").classList.toggle("active", tab==="laporan");
+
+  if(!loaded){
+    main.innerHTML = `<p style="font-size:13px;color:var(--muted);">Memuat data...</p>`;
+    return;
+  }
+
+  const ongoingAll = sessions.filter(s=>s.status==="ongoing");
+  const completedAll = sessions.filter(s=>s.status==="done");
+  document.getElementById("tabChecklist").innerHTML = `
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+    Checklist ${ongoingAll.length ? `<span class="badge">${ongoingAll.length}</span>` : ""}`;
+  document.getElementById("tabLaporan").innerHTML = `
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+    Laporan ${completedAll.length ? `<span class="badge">${completedAll.length}</span>` : ""}`;
+
+  if(tab==="checklist"){
+    const ongoing = ongoingAll;
+    main.innerHTML = `
+      ${configWarningHTML()}
+      <section>
+        <div class="card">
+          <div class="card-head">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="#3DDC97" stroke="none"/></svg>
+            <h2 class="font-display" style="font-size:13px;color:var(--text);">Mulai Pemakaian (Sebelum Bekerja)</h2>
+          </div>
+          <form id="startForm">
+            <div class="grid-2">
+              <div>
+                <label>No Seri HP *</label>
+                <input type="text" id="f_deviceName" list="hpList" placeholder="Pilih dari daftar atau ketik manual" value="${escapeHtml(startForm.deviceName)}">
+                <datalist id="hpList">${hpOptionsHTML()}</datalist>
+              </div>
+              <div>
+                <label>Nama Operator</label>
+                <input type="text" id="f_worker" list="operatorList" placeholder="cth. Andi - Inbound" value="${escapeHtml(startForm.worker)}">
+                <datalist id="operatorList">${operatorOptionsHTML()}</datalist>
+              </div>
+            </div>
+            <div>
+              <label>Baterai Awal (%) *</label>
+              <input type="number" min="0" max="100" id="f_startBattery" placeholder="cth. 95" class="font-mono" value="${startForm.startBattery}">
+            </div>
+            <div>
+              <label>Kondisi Fisik</label>
+              ${chipsHTML("startCondition", startForm.startCondition)}
+            </div>
+            <div>
+              <label>Catatan</label>
+              <input type="text" id="f_startNote" placeholder="opsional" value="${escapeHtml(startForm.startNote)}">
+            </div>
+            <button type="submit" class="btn btn-primary" ${configMissing?"disabled":""}>
+              Catat Mulai Pemakaian
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E1112" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title"><span class="left">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Sedang Dipakai</span><span>${ongoing.length}</span>
+        </h2>
+        ${ongoing.length===0 ? `<p class="empty">Belum ada HP yang sedang dicatat pemakaiannya.</p>` : ""}
+        ${ongoing.map(s => {
+          const f = endForms[s.id] || {};
+          const col = hashColor(s.deviceName);
+          return `
+          <div class="card">
+            <div class="device-row">
+              <div class="device-id">
+                <div class="avatar" style="background:${col};">${initials(s.deviceName)}</div>
+                <div style="min-width:0;">
+                  <p class="device-name">${escapeHtml(s.deviceName)}</p>
+                  <p class="device-meta">
+                    <span class="live-badge"><span class="live-dot"></span>Aktif</span>
+                    ${s.worker ? escapeHtml(s.worker)+" · " : ""}${fmtTime(s.startTime)}
+                  </p>
+                </div>
+              </div>
+              ${gaugeHTML(s.startBattery,"sm")}
+            </div>
+            <div class="dashed-top">
+              <p style="font-size:11px;text-transform:uppercase;color:var(--muted);margin:0 0 10px;letter-spacing:.05em;font-weight:600;">Selesai Bekerja</p>
+              <div class="grid-2" style="margin-bottom:10px;">
+                <input type="number" min="0" max="100" class="font-mono" placeholder="Baterai akhir %"
+                  data-end-id="${s.id}" data-end-field="endBattery" value="${f.endBattery ?? ""}">
+                <button class="btn btn-teal" data-complete-id="${s.id}">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0E1112" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Selesai
+                </button>
+              </div>
+              ${chipsHTML("end_"+s.id, f.endCondition || "Baik")}
+              <div style="margin-top:10px;">
+                <input type="text" placeholder="Catatan akhir (opsional)" data-end-id="${s.id}" data-end-field="endNote" value="${escapeHtml(f.endNote||"")}">
+              </div>
+            </div>
+          </div>`;
+        }).join("")}
+      </section>
+    `;
+
+    document.getElementById("startForm").addEventListener("submit", (e)=>{ e.preventDefault(); startSession(); });
+    document.getElementById("f_deviceName").addEventListener("input", e=>startForm.deviceName=e.target.value);
+    document.getElementById("f_worker").addEventListener("input", e=>startForm.worker=e.target.value);
+    document.getElementById("f_startBattery").addEventListener("input", e=>startForm.startBattery=e.target.value);
+    document.getElementById("f_startNote").addEventListener("input", e=>startForm.startNote=e.target.value);
+
+    main.querySelectorAll('[data-chipgroup="startCondition"]').forEach(btn=>{
+      btn.addEventListener("click", ()=>{ startForm.startCondition = btn.dataset.value; render(); });
+    });
+    main.querySelectorAll('[data-end-id]').forEach(inp=>{
+      inp.addEventListener("input", ()=>{
+        const id = inp.dataset.endId, field = inp.dataset.endField;
+        endForms[id] = { ...(endForms[id]||{}), [field]: inp.value };
+      });
+    });
+    main.querySelectorAll('[data-complete-id]').forEach(btn=>{
+      btn.addEventListener("click", ()=> completeSession(btn.dataset.completeId));
+    });
+    ongoing.forEach(s=>{
+      main.querySelectorAll(`[data-chipgroup="end_${s.id}"]`).forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          endForms[s.id] = { ...(endForms[s.id]||{}), endCondition: btn.dataset.value };
+          render();
+        });
+      });
+    });
+
+  } else if(tab==="laporan"){
+    const completed = completedAll;
+    const summary = computeSummary(completed);
+
+    let filtered = completed.filter(s=>{
+      const q = reportQuery.trim().toLowerCase();
+      const matchQ = !q || s.deviceName.toLowerCase().includes(q) || (s.worker||"").toLowerCase().includes(q);
+      const isBad = s.endCondition && s.endCondition !== "Baik";
+      const matchStatus = reportStatus==="all" || (reportStatus==="bad" && isBad) || (reportStatus==="good" && !isBad);
+      return matchQ && matchStatus;
+    });
+
+    main.innerHTML = `
+      ${configWarningHTML()}
+      ${summary ? `
+      <section class="summary-grid">
+        <div class="summary-box">
+          <div class="summary-icon" style="background:var(--green-dim);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <p class="summary-label">Sesi Selesai</p>
+          <p class="summary-value font-mono">${summary.count}</p>
+        </div>
+        <div class="summary-box">
+          <div class="summary-icon" style="background:rgba(96,165,250,.12);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.2"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          </div>
+          <p class="summary-label">Total HP</p>
+          <p class="summary-value font-mono">${summary.devices}</p>
+        </div>
+        <div class="summary-box">
+          <div class="summary-icon" style="background:var(--amber-dim);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2.2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+          </div>
+          <p class="summary-label">Rata&#178; Baterai</p>
+          <p class="summary-value font-mono" style="color:var(--amber);">${summary.avgUsed.toFixed(1)}%</p>
+        </div>
+        <div class="summary-box">
+          <div class="summary-icon" style="background:var(--red-dim);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F0555A" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <p class="summary-label">Bermasalah</p>
+          <p class="summary-value font-mono" style="color:${summary.bermasalah>0?'var(--red)':'var(--text)'};">${summary.bermasalah}</p>
+        </div>
+      </section>` : ""}
+
+      <section>
+        <h2 class="section-title"><span class="left">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+          Riwayat Pemakaian</span></h2>
+
+        ${completed.length>0 ? `
+        <div class="filter-bar">
+          <div class="search-wrap" style="flex:1;min-width:160px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8D959E" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="reportSearch" placeholder="Cari No Seri HP / Operator..." value="${escapeHtml(reportQuery)}">
+          </div>
+          <button class="chip filter-chip ${reportStatus==='all'?'active':''}" data-filter="all">Semua</button>
+          <button class="chip filter-chip ${reportStatus==='good'?'active':''}" data-filter="good">Baik</button>
+          <button class="chip filter-chip ${reportStatus==='bad'?'active':''}" data-filter="bad">Bermasalah</button>
+        </div>
+        <p class="result-count">Menampilkan ${filtered.length} dari ${completed.length} sesi</p>
+        ` : ""}
+
+        ${completed.length===0 ? `<p class="empty">Belum ada laporan. Selesaikan sesi di tab Checklist untuk melihat laporan di sini.</p>` : ""}
+        ${completed.length>0 && filtered.length===0 ? `<p class="empty">Tidak ada hasil yang cocok dengan pencarian/filter.</p>` : ""}
+
+        ${filtered.map(s=>{
+          const used = s.startBattery - s.endBattery;
+          const ms = new Date(s.endTime) - new Date(s.startTime);
+          const rate = ms>0 ? used/(ms/3600000) : 0;
+          const isCharged = used < 0;
+          const isBad = s.endCondition && s.endCondition !== "Baik";
+          const col = hashColor(s.deviceName);
+          return `
+          <div class="report-card">
+            <div class="rc-head">
+              <div class="device-id">
+                <div class="avatar" style="background:${col};">${initials(s.deviceName)}</div>
+                <div style="min-width:0;">
+                  <p class="device-name">${escapeHtml(s.deviceName)}</p>
+                  ${s.worker ? `<p class="device-meta">${escapeHtml(s.worker)}</p>` : ""}
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="rc-status ${isBad?'bad':'good'}">${isBad ? 'Bermasalah' : 'Kondisi Baik'}</span>
+                <button class="icon-btn" data-delete-id="${s.id}" title="Hapus">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8D959E" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="rc-battery">
+              <div class="rc-batt-col">
+                <p class="rc-batt-label">Sebelum</p>
+                <p class="rc-batt-value" style="color:${batteryColor(s.startBattery)};">${s.startBattery}%</p>
+                <p class="rc-batt-cond">${escapeHtml(s.startCondition)}</p>
+              </div>
+              <div class="rc-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5A6169" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <span class="rc-delta font-mono" style="background:${isCharged?'var(--green-dim)':'var(--amber-dim)'};color:${isCharged?'var(--green)':'var(--amber)'};">
+                  ${isCharged ? "+"+Math.abs(used) : "-"+used}%
+                </span>
+              </div>
+              <div class="rc-batt-col">
+                <p class="rc-batt-label">Sesudah</p>
+                <p class="rc-batt-value" style="color:${batteryColor(s.endBattery)};">${s.endBattery}%</p>
+                <p class="rc-batt-cond">${escapeHtml(s.endCondition)}</p>
+              </div>
+            </div>
+
+            <div class="rc-time">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8D959E" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${fmtTime(s.startTime)} &nbsp;&rarr;&nbsp; ${fmtTime(s.endTime)}
+            </div>
+
+            ${s.endNote ? `<p class="rc-note">&ldquo;${escapeHtml(s.endNote)}&rdquo;</p>` : ""}
+            ${isBad ? `
+              <div class="rc-warn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F0555A" stroke-width="2" style="margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Perlu ditindaklanjuti: <strong>${escapeHtml(s.endCondition)}</strong></span>
+              </div>` : ""}
+
+            <div class="rc-stats">
+              <div class="rc-stat">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8D959E" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span class="font-mono" style="font-weight:600;">${fmtDuration(ms)}</span>
+                <span class="stat-label">durasi</span>
+              </div>
+              <div class="rc-stat">
+                ${isCharged
+                  ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`
+                  : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`
+                }
+                <span class="font-mono" style="font-weight:600;color:${isCharged?'var(--green)':'var(--amber)'};">${rate>=0?rate.toFixed(1):"0.0"}%/jam</span>
+                <span class="stat-label">rata-rata</span>
+              </div>
+            </div>
+          </div>`;
+        }).join("")}
+      </section>
+    `;
+
+    main.querySelectorAll('[data-delete-id]').forEach(btn=>{
+      btn.addEventListener("click", ()=> deleteSession(btn.dataset.deleteId));
+    });
+    const searchEl = document.getElementById("reportSearch");
+    if(searchEl){
+      searchEl.addEventListener("input", (e)=>{
+        reportQuery = e.target.value; render();
+        const el = document.getElementById("reportSearch");
+        el.focus(); el.setSelectionRange(reportQuery.length, reportQuery.length);
+      });
+    }
+    main.querySelectorAll('[data-filter]').forEach(btn=>{
+      btn.addEventListener("click", ()=>{ reportStatus = btn.dataset.filter; render(); });
+    });
+  }
+
+  if(saveError){
+    main.innerHTML += `<p class="save-err">Koneksi ke Google Sheet bermasalah. Periksa deployment Web App &amp; APPS_SCRIPT_URL.</p>`;
+  }
+}
+
+function escapeHtml(str){
+  return String(str||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+document.getElementById("tabChecklist").addEventListener("click", ()=>{ tab="checklist"; render(); });
+document.getElementById("tabLaporan").addEventListener("click", ()=>{ tab="laporan"; render(); });
+document.getElementById("modeToggle").addEventListener("click", ()=>{ applyMode(uiMode === "dark" ? "light" : "dark"); });
+
+applyMode("dark");
+loadAll();
+setInterval(loadAll, 20000);
+</script>
+</body>
+</html>
